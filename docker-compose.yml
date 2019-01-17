@@ -5,4 +5,4 @@ services:
      context: ./
      dockerfile: Dockerfile-ohdb
     ports: 
-    - "3307:3307"
+    - "3307:3306"
