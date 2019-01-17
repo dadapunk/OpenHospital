@@ -1,6 +1,6 @@
 language: java
 install: true
 script: mvn clean install -DskipTests=true
-after_install:
+after_script:
 - docker ps
 - docker inspect test-mysql | grep IPAddress
