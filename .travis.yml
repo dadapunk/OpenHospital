@@ -2,3 +2,5 @@ language: java
 before_script:
 - docker-compose up -d
 - docker ps
+after_success:
+- docker-compose down
