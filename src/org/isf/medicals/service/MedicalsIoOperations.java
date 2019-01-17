@@ -6,16 +6,15 @@
 package org.isf.medicals.service;
 
 import java.util.ArrayList;
-import java.util.List;
 
-import javax.persistence.NoResultException;
-
-import org.isf.generaldata.MessageBundle;
-import org.isf.medicals.model.*;
+import org.isf.medicals.model.Medical;
 import org.isf.medicalstock.model.Movement;
-import org.isf.utils.db.DbJpaUtil;
+import org.isf.medicalstock.service.MovementIoOperationRepository;
+import org.isf.utils.db.TranslateOHException;
 import org.isf.utils.exception.OHException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 
 /**
@@ -28,8 +27,15 @@ import org.springframework.stereotype.Component;
  * 			- column pieces per packet
  */
 @Component
-public class MedicalsIoOperations {
-
+@Transactional(rollbackFor=OHException.class)
+@TranslateOHException
+public class MedicalsIoOperations 
+{
+	@Autowired
+	private MedicalsIoOperationRepository repository;
+	@Autowired	
+	private MovementIoOperationRepository moveRepository;
+	
 	/**
 	 * Retrieves the specified {@link Medical}.
 	 * @param code the medical code
@@ -39,22 +45,7 @@ public class MedicalsIoOperations {
 	public Medical getMedical(
 			int code) throws OHException 
 	{
-		DbJpaUtil jpa = new DbJpaUtil(); 
-		Medical medical = null;
-		ArrayList<Object> params = new ArrayList<Object>();
-				
-		
-		jpa.beginTransaction();
-		
-		String query = "SELECT * FROM MEDICALDSR JOIN MEDICALDSRTYPE ON MDSR_MDSRT_ID_A = MDSRT_ID_A WHERE MDSR_ID = ?";
-		params.add(code);
-		jpa.createQuery(query, Medical.class, false);
-		jpa.setParameters(params, false);
-		medical = (Medical)jpa.getResult();	
-		
-		jpa.commitTransaction();
-
-		return medical;
+		return repository.findOne(code);
 	}
 
 	/**
@@ -62,7 +53,8 @@ public class MedicalsIoOperations {
 	 * @return all the stored medicals.
 	 * @throws OHException if an error occurs retrieving the stored medicals.
 	 */
-	public ArrayList<Medical> getMedicals() throws OHException {
+	public ArrayList<Medical> getMedicals() throws OHException 
+	{
 		return getMedicals(null);
 	}
 
@@ -73,30 +65,21 @@ public class MedicalsIoOperations {
 	 * @return the stored medicals.
 	 * @throws OHException if an error occurs retrieving the stored medicals.
 	 */
-    @SuppressWarnings("unchecked")
 	public ArrayList<Medical> getMedicals(
 			String description) throws OHException 
 	{
-		DbJpaUtil jpa = new DbJpaUtil(); 
-		ArrayList<Medical> medicals = null;
-		ArrayList<Object> params = new ArrayList<Object>();
-				
-		
-		jpa.beginTransaction();
-		
-		String query = "SELECT * FROM MEDICALDSR JOIN MEDICALDSRTYPE ON MDSR_MDSRT_ID_A = MDSRT_ID_A ";
-		if (description!=null) {
-			query += "where MDSRT_DESC like ? ";
-			params.add(description);
+    	ArrayList<Medical> medicals;
+    	
+    	
+    	if (description!=null) 
+    	{
+    		medicals = (ArrayList<Medical>)repository.findAllWhereDescriptionOrderByDescription(description);
 		}
-		query += "order BY MDSR_DESC";
-		jpa.createQuery(query, Medical.class, false);
-		jpa.setParameters(params, false);
-		List<Medical> medicalList = (List<Medical>)jpa.getList();
-		medicals = new ArrayList<Medical>(medicalList);			
+		else
+		{
+			medicals = (ArrayList<Medical>)repository.findAllByOrderByDescription();
+		}
 		
-		jpa.commitTransaction();
-
 		return medicals;
 	}
 
@@ -108,108 +91,157 @@ public class MedicalsIoOperations {
 	 * @return the retrieved medicals.
 	 * @throws OHException if an error occurs retrieving the medicals.
 	 */
-    @SuppressWarnings("unchecked")
 	public ArrayList<Medical> getMedicals(
 			String description, 
 			String type, 
 			boolean expiring) throws OHException 
 	{
-		DbJpaUtil jpa = new DbJpaUtil(); 
 		ArrayList<Medical> medicals = null;
-		ArrayList<Object> params = new ArrayList<Object>();
-				
 		
-		jpa.beginTransaction();
-		
-		String query = "SELECT * FROM MEDICALDSR JOIN MEDICALDSRTYPE ON MDSR_MDSRT_ID_A = MDSRT_ID_A ";
-		if (description!=null) {
-			query += "where ";
-			query += "(MDSR_DESC like ? OR MDSR_CODE like ?) ";
-			params.add("%"+description+"%");
-			params.add("%"+description+"%");
+	
+		if (description != null) 
+		{
+			if(type!=null)
+			{
+				if(expiring)
+				{
+					medicals = (ArrayList<Medical>)repository.findAllWhereDescriptionAndTypeAndExpiringOrderByTypeAndDescritpion(description, type);					
+				}
+				else
+				{
+					medicals = (ArrayList<Medical>)repository.findAllWhereDescriptionAndTypeOrderByTypeAndDescritpion(description, type);					
+				}
+			}
+			else
+			{
+				if(expiring)
+				{
+					medicals = (ArrayList<Medical>)repository.findAllWhereDescriptionAndExpiringOrderByTypeAndDescritpion(description);					
+				}
+				else
+				{
+					medicals = (ArrayList<Medical>)repository.findAllWhereDescriptionOrderByTypeAndDescritpion(description);					
+				}				
+			}
 		}
-		if(type!=null){
-			if (params.size() == 0) 
+		else
+		{
+			if(type!=null)
 			{
-				query += "where ";				
+				if(expiring)
+				{
+					medicals = (ArrayList<Medical>)repository.findAllWhereTypeAndExpiringOrderByTypeAndDescritpion(type);					
+				}
+				else
+				{
+					medicals = (ArrayList<Medical>)repository.findAllWhereTypeOrderByTypeAndDescritpion(type);					
+				}
 			}
-			else 
+			else
 			{
-				query += "and ";
-			}
-			query += "(MDSRT_ID_A=?) ";
-			params.add(type);
-		}
-		if(expiring){
-			if (params.size() == 0) 
-			{
-				query += "where ";
-			}
-			else 
-			{
-				query += "and ";
-			}
-			query += "((MDSR_INI_STOCK_QTI+MDSR_IN_QTI-MDSR_OUT_QTI)<MDSR_MIN_STOCK_QTI) ";
-		}
-		query += "order BY MDSR_MDSRT_ID_A, MDSR_DESC";
-		jpa.createQuery(query, Medical.class, false);
-		jpa.setParameters(params, false);
-		List<Medical> medicalList = (List<Medical>)jpa.getList();
-		medicals = new ArrayList<Medical>(medicalList);			
-		
-		jpa.commitTransaction();
+				if(expiring)
+				{
+					medicals = (ArrayList<Medical>)repository.findAllWhereExpiringOrderByTypeAndDescritpion();					
+				}
+				else
+				{
+					medicals = (ArrayList<Medical>)repository.findAllByOrderByTypeAndDescritpion();					
+				}				
+			}			
+		}  
 
 		return medicals;
 	}
+	
+	/**
+	 * Checks if the specified {@link Medical} exists or not.
+	 * @param medical - the medical to check.
+	 * @param update - if <code>true</code> excludes the actual {@link Medical}
+	 * @return all {@link Medical} with similar description
+	 * @throws OHException if an SQL error occurs during the check.
+	 */
+	@SuppressWarnings("unchecked")
+	public ArrayList<Medical> medicalCheck(Medical medical, boolean update) throws OHException
+	{
+		ArrayList<Medical> medicals = null;
+		
+		if (update) {
+			medicals = (ArrayList<Medical>)repository.findAllWhereDescriptionSoundsLike(medical.getDescription(), medical.getCode());
+		} else {
+			medicals = (ArrayList<Medical>)repository.findAllWhereDescriptionSoundsLike(medical.getDescription()); 
+		}
+
+		return medicals;
+	}
+	
+	/**
+	 * Checks if the specified {@link Medical} ProductCode exists or not.
+	 * @param medical - the medical to check.
+	 * @param update - if <code>true</code> excludes the actual {@link Medical}
+	 * @return <code>true</code> if exists, <code>false</code> otherwise.
+	 * @throws OHException if an SQL error occurs during the check.
+	 */
+	public boolean productCodeExists(Medical medical, boolean update) throws OHException
+	{
+		boolean result = false;
+
+		
+		Medical foundMedical = null;
+		
+		if (update) {
+			foundMedical = repository.findOneWhereProductCode(medical.getProd_code(), medical.getCode());
+		} else {
+			foundMedical = repository.findOneWhereProductCode(medical.getProd_code()); 
+		}
+		if (foundMedical != null) 
+		{
+			result = true;
+		}
+		
+		return result;
+	}
+    
 
 	/**
 	 * Checks if the specified {@link Medical} exists or not.
 	 * @param medical the medical to check.
+	 * @param update - if <code>true</code> exclude the current medical itself from search
 	 * @return <code>true</code> if exists <code>false</code> otherwise.
 	 * @throws OHException if an error occurs during the check.
 	 */
-	public boolean medicalExists(Medical medical) throws OHException {
-		
-		DbJpaUtil jpa = new DbJpaUtil();
+	public boolean medicalExists(Medical medical, boolean update) throws OHException 
+	{
 		boolean result = false;
-		ArrayList<Object> params = new ArrayList<Object>();
 
-		jpa.beginTransaction();
-
-		String query = "SELECT * FROM MEDICALDSR WHERE MDSR_MDSRT_ID_A = ? AND MDSR_DESC = ?";
-		params.add(medical.getType().getCode());
-		params.add(medical.getDescription());
-		jpa.createQuery(query, Medical.class, false);
-		jpa.setParameters(params, false);
-		try {
-			Medical foundMedical = (Medical) jpa.getResult();
-			if (foundMedical != null) {
-				result = true;
-			}
-		} catch (Exception e) {
-			if (e.getCause().getClass().equals(NoResultException.class))
-				return false;
-			throw new OHException(MessageBundle.getMessage("angal.sql.problemsoccurredwiththesqlistruction"), e);
-		} finally {
-			jpa.commitTransaction();
+		
+		Medical foundMedical = null;
+		
+		if (update) {
+			foundMedical = repository.findOneWhereDescriptionAndType(medical.getDescription(), medical.getType().getCode(), medical.getCode());
+		} else {
+			foundMedical = repository.findOneWhereDescriptionAndType(medical.getDescription(), medical.getType().getCode()); 
 		}
-
+		if (foundMedical != null) 
+		{
+			result = true;
+		}
+		
 		return result;
 	}
-
+	
 	/**
 	 * Stores the specified {@link Medical}.
 	 * @param medical the medical to store.
 	 * @return <code>true</code> if the medical has been stored, <code>false</code> otherwise.
 	 * @throws OHException if an error occurs storing the medical.
 	 */
-	public boolean newMedical(Medical medical) throws OHException {
-		DbJpaUtil jpa = new DbJpaUtil();
+	public boolean newMedical(Medical medical) throws OHException 
+	{
 		boolean result = true;
+		
 
-		jpa.beginTransaction();
-		jpa.persist(medical);
-		jpa.commitTransaction();
+		Medical savedMedical = repository.save(medical);
+		result = (savedMedical != null);
 
 		return result;
 	}
@@ -222,21 +254,15 @@ public class MedicalsIoOperations {
 	 */
 	public int getMedicalLock(
 			int code) throws OHException 
-	{
-		DbJpaUtil jpa = new DbJpaUtil(); 
-		Medical medical = null;
+	{		
 		int lock = -1;
 				
 		
-		jpa.beginTransaction();
-		
-		medical = (Medical)jpa.find(Medical.class, code); 
-		if (medical != null)
+		Medical foundMedical = repository.findOne(code);
+		if (foundMedical != null)
 		{
-			lock = medical.getLock();
+			lock = foundMedical.getLock();
 		}
-		
-		jpa.commitTransaction();
 		
 		return lock;
 	}
@@ -247,21 +273,13 @@ public class MedicalsIoOperations {
 	 * @return <code>true</code> if the medical has been updated <code>false</code> otherwise.
 	 * @throws OHException if an error occurs during the update.
 	 */
-	public boolean updateMedical(Medical medical) throws OHException {
-		DbJpaUtil jpa = new DbJpaUtil();
+	public boolean updateMedical(Medical medical) throws OHException 
+	{
 		boolean result = true;
 		
-		medical.setLock(new Integer(medical.getLock().intValue() + 1));
 
-		try {
-			
-			jpa.beginTransaction();
-			jpa.merge(medical);
-			jpa.commitTransaction();
-			
-		} catch (Exception e) {
-			throw new OHException(e.getMessage(), e);
-		}
+		Medical savedMedical = repository.save(medical);
+		result = (savedMedical != null);
 
 		return result;
 	}
@@ -274,33 +292,16 @@ public class MedicalsIoOperations {
 	 */
 	public boolean isMedicalReferencedInStockMovement(
 			int code) throws OHException 
- {
-		DbJpaUtil jpa = new DbJpaUtil();
+	{
 		boolean result = false;
-		ArrayList<Object> params = new ArrayList<Object>();
 
-		jpa.beginTransaction();
-
-		String query = "select * from MEDICALDSRSTOCKMOV where MMV_MDSR_ID = ?";
-		params.add(code);
-		jpa.createQuery(query, Movement.class, false);
-		jpa.setParameters(params, false);
-		try {
-			Movement foundMovement = (Movement) jpa.getResult();
-			if (foundMovement.getMedical().getCode() == code) {
-				result = true;
-			}
-		} catch (Exception e) {
-			if (e.getCause().getClass().equals(NoResultException.class))
-				return false;
-			throw new OHException(
-					MessageBundle
-							.getMessage("angal.sql.problemsoccurredwiththesqlistruction"),
-					e);
-		} finally {
-			jpa.commitTransaction();
+		
+		Movement foundMovement = moveRepository.findAllByMedicalCode(code);
+		if (foundMovement.getMedical().getCode() == code) 
+		{
+			result = true;
 		}
-
+		
 		return result;
 	}
 
@@ -313,15 +314,11 @@ public class MedicalsIoOperations {
 	public boolean deleteMedical(
 			Medical medical) throws OHException
 	{
-		DbJpaUtil jpa = new DbJpaUtil(); 
 		boolean result = true;
 		
 		
-		jpa.beginTransaction();	
-		Medical objToRemove = (Medical) jpa.find(Medical.class, medical.getCode());
-		jpa.remove(objToRemove);
-    	jpa.commitTransaction();
-    	
+		repository.delete(medical);
+
 		return result;
 	}
 }

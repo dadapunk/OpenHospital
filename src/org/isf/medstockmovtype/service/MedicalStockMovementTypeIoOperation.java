@@ -1,42 +1,34 @@
 package org.isf.medstockmovtype.service;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import org.isf.medstockmovtype.model.MovementType;
-import org.isf.utils.db.DbJpaUtil;
+import org.isf.utils.db.TranslateOHException;
 import org.isf.utils.exception.OHException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Persistence class for the medstockmovtype module.
  *
  */
 @Component
+@Transactional(rollbackFor=OHException.class)
+@TranslateOHException
 public class MedicalStockMovementTypeIoOperation {
 
+	@Autowired
+	private MedicalStockMovementTypeIoOperationRepository repository;
+	
 	/**
 	 * Retrieves all the stored {@link MovementType}.
 	 * @return all the stored {@link MovementType}s.
 	 * @throws OHException if an error occurs retrieving the medical stock movement types.
 	 */
-    @SuppressWarnings("unchecked")
 	public ArrayList<MovementType> getMedicaldsrstockmovType() throws OHException 
 	{
-		DbJpaUtil jpa = new DbJpaUtil(); 
-		ArrayList<MovementType> medicaldsrstockmovtypes = null;
-				
-		
-		jpa.beginTransaction();
-		
-		String query = "SELECT * FROM MEDICALDSRSTOCKMOVTYPE ORDER BY MMVT_DESC";
-		jpa.createQuery(query, MovementType.class, false);
-		List<MovementType> movementTypeList = (List<MovementType>)jpa.getList();
-		medicaldsrstockmovtypes = new ArrayList<MovementType>(movementTypeList);			
-		
-		jpa.commitTransaction();
-
-		return medicaldsrstockmovtypes;
+		return new ArrayList<MovementType>(repository.findAllByOrderByDescriptionAsc()); 	
 	}
 
 	/**
@@ -48,15 +40,13 @@ public class MedicalStockMovementTypeIoOperation {
 	public boolean updateMedicaldsrstockmovType(
 			MovementType medicaldsrstockmovType) throws OHException 
 	{
-		DbJpaUtil jpa = new DbJpaUtil(); 
 		boolean result = true;
+	
+
+		MovementType savedMedicaldsrstockmovType = repository.save(medicaldsrstockmovType);
+		result = (savedMedicaldsrstockmovType != null);
 		
-		
-		jpa.beginTransaction();	
-		jpa.merge(medicaldsrstockmovType);
-    	jpa.commitTransaction();
-    	
-		return result;	
+		return result;
 	}
 
 	/**
@@ -68,15 +58,13 @@ public class MedicalStockMovementTypeIoOperation {
 	public boolean newMedicaldsrstockmovType(
 			MovementType medicaldsrstockmovType) throws OHException 
 	{
-		DbJpaUtil jpa = new DbJpaUtil(); 
 		boolean result = true;
+	
+
+		MovementType savedMedicaldsrstockmovType = repository.save(medicaldsrstockmovType);
+		result = (savedMedicaldsrstockmovType != null);
 		
-		
-		jpa.beginTransaction();	
-		jpa.persist(medicaldsrstockmovType);
-    	jpa.commitTransaction();
-    	
-		return result;	
+		return result;
 	}
 
 	/**
@@ -88,16 +76,11 @@ public class MedicalStockMovementTypeIoOperation {
 	public boolean deleteMedicaldsrstockmovType(
 			MovementType medicaldsrstockmovType) throws OHException 
 	{
-		DbJpaUtil jpa = new DbJpaUtil(); 
 		boolean result = true;
+	
 		
+		repository.delete(medicaldsrstockmovType);
 		
-		jpa.beginTransaction();	
-		MovementType objToRemove = (MovementType) jpa.find(MovementType.class, medicaldsrstockmovType.getCode());
-
-		jpa.remove(objToRemove);
-    	jpa.commitTransaction();
-    	
 		return result;	
 	}
 
@@ -110,19 +93,11 @@ public class MedicalStockMovementTypeIoOperation {
 	public boolean isCodePresent(
 			String code) throws OHException 
 	{
-		DbJpaUtil jpa = new DbJpaUtil(); 
-		MovementType medicaldsrstockmovType;
-		boolean result = false;
+		boolean result = true;
+	
 		
+		result = repository.exists(code);
 		
-		jpa.beginTransaction();	
-		medicaldsrstockmovType = (MovementType)jpa.find(MovementType.class, code);
-		if (medicaldsrstockmovType != null)
-		{
-			result = true;
-		}
-    	jpa.commitTransaction();
-    	
-		return result;	
+		return result;
 	}
 }

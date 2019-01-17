@@ -21,6 +21,7 @@ import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
@@ -36,6 +37,8 @@ import org.isf.medicalstockward.manager.MovWardBrowserManager;
 import org.isf.medicalstockward.model.MedicalWard;
 import org.isf.medicalstockward.model.MovementWard;
 import org.isf.utils.exception.OHException;
+import org.isf.utils.exception.OHServiceException;
+import org.isf.utils.exception.gui.OHServiceExceptionUtil;
 import org.isf.ward.model.Ward;
 
 public class WardPharmacyRectify extends JDialog {
@@ -82,7 +85,7 @@ public class WardPharmacyRectify extends JDialog {
 	
 	//Medicals (ALL)
 	private MedicalBrowsingManager medManager = new MedicalBrowsingManager();
-	private ArrayList<Medical> medicals = medManager.getMedicals();
+	private ArrayList<Medical> medicals;
 	private HashMap<String, Medical> medicalMap; //map medicals by their prod_code
 	private HashMap<Integer, Double> wardMap; //map quantities by their medical_id
 	
@@ -101,14 +104,23 @@ public class WardPharmacyRectify extends JDialog {
 	}
 
 	public WardPharmacyRectify() {
+		initMedicals();
 		initComponents();
 	}
 	
+	private void initMedicals() {
+		try {
+			this.medicals = medManager.getMedicals();
+		} catch (OHServiceException e) {
+			this.medicals = null;
+			OHServiceExceptionUtil.showMessages(e);
+		}
+	}
+
 	/**
 	 * Create the dialog.
 	 */
 	public WardPharmacyRectify(JFrame owner, Ward ward, ArrayList<MedicalWard> drugs) {
-		
 		super(owner, true);
 		wardMap = new HashMap<Integer, Double>();
 		for (MedicalWard medWard : drugs) {
@@ -120,10 +132,13 @@ public class WardPharmacyRectify extends JDialog {
 			}
 		}
 		medicalMap = new HashMap<String, Medical>();
-		for (Medical med : medicals) {
-			medicalMap.put(med.getProd_code(), med);
+		if (null != medicals) {
+			for (Medical med : medicals) {
+				medicalMap.put(med.getProd_code(), med);
+			}
 		}
 		wardSelected = ward;
+		initMedicals();
 		initComponents();
 	}
 	
@@ -228,11 +243,19 @@ public class WardPharmacyRectify extends JDialog {
 				jButtonOk.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
 						
-						Medical med = (Medical) jComboBoxMedical.getSelectedItem();
-						if (!(med instanceof Medical)) return;
+						Medical med;
+						try {
+							med = (Medical) jComboBoxMedical.getSelectedItem();
+						} catch (ClassCastException e1) {
+							JOptionPane.showMessageDialog(WardPharmacyRectify.this, MessageBundle.getMessage("angal.medicalstockward.rectify.pleaseselectadrug")); //$NON-NLS-1$
+							return;
+						}
 						
 						String reason = jTextFieldReason.getText().trim();
-						if (reason.equals("")) return; //$NON-NLS-1$
+						if (reason.equals("")) { //$NON-NLS-1$
+							JOptionPane.showMessageDialog(WardPharmacyRectify.this, MessageBundle.getMessage("angal.medicalstockward.rectify.pleasespecifythereason")); //$NON-NLS-1$
+							return;
+						}
 						
 						Double stock = Double.parseDouble(jLabelStockQty.getText());
 						Double newQty = (Double) jSpinnerNewQty.getValue();
@@ -240,14 +263,20 @@ public class WardPharmacyRectify extends JDialog {
 						if (quantity == 0.) return;
 						
 						MovWardBrowserManager wardMan = new MovWardBrowserManager();
-						boolean result = wardMan.newMovementWard(new MovementWard(
-								wardSelected, 
-								new GregorianCalendar(), 
-								false, null, 0, 0, 
-								reason, 
-								med, 
-								quantity,
-								MessageBundle.getMessage("angal.medicalstockward.rectify.pieces"))); //$NON-NLS-1$
+						boolean result;
+						try {
+							result = wardMan.newMovementWard(new MovementWard(
+									wardSelected, 
+									new GregorianCalendar(), 
+									false, null, 0, 0, 
+									reason, 
+									med, 
+									quantity,
+									MessageBundle.getMessage("angal.medicalstockward.rectify.pieces")));
+						} catch (OHServiceException e1) {
+							result = false;
+							OHServiceExceptionUtil.showMessages(e1);
+						} //$NON-NLS-1$
 						if (!result) {
 							
 							return;

@@ -21,6 +21,8 @@ import org.isf.dlvrtype.gui.DeliveryTypeBrowserEdit.DeliveryTypeListener;
 import org.isf.dlvrtype.manager.DeliveryTypeBrowserManager;
 import org.isf.dlvrtype.model.DeliveryType;
 import org.isf.generaldata.MessageBundle;
+import org.isf.utils.exception.OHServiceException;
+import org.isf.utils.exception.model.OHExceptionMessage;
 import org.isf.utils.jobjects.ModalJFrame;
 
 /**
@@ -37,7 +39,10 @@ public class DeliveryTypeBrowser extends ModalJFrame implements DeliveryTypeList
 	 */
 	private static final long serialVersionUID = 1L;
 	private ArrayList<DeliveryType> pDeliveryType;
-	private String[] pColums = { MessageBundle.getMessage("angal.dlvrtype.codem"), MessageBundle.getMessage("angal.dlvrtype.descriptionm")};
+	private String[] pColums = {
+			MessageBundle.getMessage("angal.common.codem"),
+			MessageBundle.getMessage("angal.common.descriptionm")
+	};
 	private int[] pColumwidth = {80, 200 };
 
 	private JPanel jContainPanel = null;
@@ -196,7 +201,6 @@ public class DeliveryTypeBrowser extends ModalJFrame implements DeliveryTypeList
 						int n = JOptionPane.showConfirmDialog(null,
 								MessageBundle.getMessage("angal.dlvrtype.deletedeliverytype") + " \" "+dis.getDescription() + "\" ?",
 								MessageBundle.getMessage("angal.hospital"), JOptionPane.YES_NO_OPTION);
-						
 						if ((n == JOptionPane.YES_OPTION)
 								&& (manager.deleteDeliveryType(dis))) {
 							pDeliveryType.remove(jTable.getSelectedRow());

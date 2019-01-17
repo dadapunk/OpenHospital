@@ -40,10 +40,12 @@ import org.isf.patient.gui.PatientInsert;
 import org.isf.patient.gui.PatientInsertExtended;
 import org.isf.patient.gui.PatientSummary;
 import org.isf.patient.model.Patient;
-import org.isf.stat.manager.GenericReportAdmission;
-import org.isf.stat.manager.GenericReportDischarge;
-import org.isf.stat.manager.GenericReportOpd;
-import org.isf.stat.manager.GenericReportPatient;
+import org.isf.stat.gui.report.GenericReportAdmission;
+import org.isf.stat.gui.report.GenericReportDischarge;
+import org.isf.stat.gui.report.GenericReportOpd;
+import org.isf.stat.gui.report.GenericReportPatient;
+import org.isf.utils.exception.OHServiceException;
+import org.isf.utils.exception.model.OHExceptionMessage;
 import org.isf.utils.jobjects.ModalJFrame;
 import org.isf.utils.table.TableSorter;
 import org.isf.ward.manager.WardBrowserManager;
@@ -170,10 +172,21 @@ public class PatientFolderBrowser extends ModalJFrame implements
 	private ArrayList<Ward> ward;
 	private ArrayList<Opd> opdList;
 	
-	private String[] pColums = {MessageBundle.getMessage("angal.common.datem"),MessageBundle.getMessage("angal.admission.wards"), MessageBundle.getMessage("angal.admission.diagnosisinm"), MessageBundle.getMessage("angal.admission.diagnosisoutm"), MessageBundle.getMessage("angal.admission.statusm") }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
+	private String[] pColums = {
+			MessageBundle.getMessage("angal.common.datem"),
+			MessageBundle.getMessage("angal.admission.wards"),
+			MessageBundle.getMessage("angal.admission.diagnosisinm"),
+			MessageBundle.getMessage("angal.admission.diagnosisoutm"),
+			MessageBundle.getMessage("angal.admission.statusm")
+	}; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
 	private int[] pColumwidth = {120, 150, 200, 200, 120 };
 	
-	private String[] plColums = { MessageBundle.getMessage("angal.common.datem"), MessageBundle.getMessage("angal.lab.examm"), MessageBundle.getMessage("angal.lab.codem"),MessageBundle.getMessage("angal.lab.resultm") }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+	private String[] plColums = {
+			MessageBundle.getMessage("angal.common.datem"),
+			MessageBundle.getMessage("angal.lab.examm"),
+			MessageBundle.getMessage("angal.common.codem"),
+			MessageBundle.getMessage("angal.lab.resultm")
+	}; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 	private int[] plColumwidth = { 150, 200, 50, 200 };
 
 	private DefaultTableModel admModel;
@@ -489,17 +502,45 @@ public class PatientFolderBrowser extends ModalJFrame implements
 
 		public AdmissionBrowserModel() {
 			AdmissionBrowserManager manager = new AdmissionBrowserManager();
-			admList = manager.getAdmissions(patient);
-//			Collections.sort(admList);
-//			Collections.reverse(admList);
 			DiseaseBrowserManager dbm = new DiseaseBrowserManager();
-			disease = dbm.getDiseaseAll();
-//			org.isf.operation.manager.OperationBrowserManager obm = new org.isf.operation.manager.OperationBrowserManager();
-//			operation = obm.getOperation();
 			WardBrowserManager wbm = new WardBrowserManager();
-			ward = wbm.getWards();
 			OpdBrowserManager opd = new OpdBrowserManager();
-			opdList = opd.getOpdList(patient.getCode());
+			try {
+				admList = manager.getAdmissions(patient);
+			}catch(OHServiceException e){
+				if(e.getMessages() != null){
+					for(OHExceptionMessage msg : e.getMessages()){
+						JOptionPane.showMessageDialog(null, msg.getMessage(), msg.getTitle() == null ? "" : msg.getTitle(), msg.getLevel().getSwingSeverity());
+					}
+				}
+			}
+			try {
+				disease = dbm.getDiseaseAll();
+			}catch(OHServiceException e){
+				if(e.getMessages() != null){
+					for(OHExceptionMessage msg : e.getMessages()){
+						JOptionPane.showMessageDialog(null, msg.getMessage(), msg.getTitle() == null ? "" : msg.getTitle(), msg.getLevel().getSwingSeverity());
+					}
+				}
+			}
+			try {
+				ward = wbm.getWards();
+			}catch(OHServiceException e){
+				if(e.getMessages() != null){
+					for(OHExceptionMessage msg : e.getMessages()){
+						JOptionPane.showMessageDialog(null, msg.getMessage(), msg.getTitle() == null ? "" : msg.getTitle(), msg.getLevel().getSwingSeverity());
+					}
+				}
+			}
+			try {
+				opdList = opd.getOpdList(patient.getCode());
+			}catch(OHServiceException e){
+				if(e.getMessages() != null){
+					for(OHExceptionMessage msg : e.getMessages()){
+						JOptionPane.showMessageDialog(null, msg.getMessage(), msg.getTitle() == null ? "" : msg.getTitle(), msg.getLevel().getSwingSeverity());
+					}
+				}
+			}
 		}
 		
 		
@@ -574,18 +615,22 @@ public class PatientFolderBrowser extends ModalJFrame implements
 			}else if (c == 3) {
 				String id = null;
 				if (r < admList.size()) {
-					id = admList.get(r).getDiseaseOut1().getCode();
+					id = admList.get(r).getDiseaseOut1() == null ? null :  admList.get(r).getDiseaseOut1().getCode();
 					if (id == null){
 						id = ""; //$NON-NLS-1$
 					}
 				} else {
 					int z = r - admList.size();
-					id = opdList.get(z).getDisease3().getCode();
-					if (id == null){
-						id = opdList.get(z).getDisease2().getCode();
-						if (id == null){
-							id = ""; //$NON-NLS-1$
+					Disease dis = opdList.get(z).getDisease3();
+					if (dis == null){
+						dis = opdList.get(z).getDisease2();
+						if (dis == null){
+							id = opdList.get(z).getDisease().getCode();
+						} else {
+							id = dis.getCode();
 						}
+					} else {
+						id = dis.getCode();
 					}
 				}
 				for (Disease elem : disease) {
@@ -632,7 +677,12 @@ public class PatientFolderBrowser extends ModalJFrame implements
 
 		public LabBrowserModel() {
 			org.isf.lab.manager.LabManager lbm = new org.isf.lab.manager.LabManager();
-			labList = lbm.getLaboratory(patient);
+			try {
+				labList = lbm.getLaboratory(patient);
+			} catch (OHServiceException e) {
+				labList = new ArrayList<Laboratory>();
+				JOptionPane.showMessageDialog(null, e.getMessage());
+			}
 		}
 		
 		public int getRowCount() {

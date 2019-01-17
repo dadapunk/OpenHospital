@@ -7,16 +7,17 @@
 	<version>2.0</version>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<spring.framework.version>4.3.18.RELEASE</spring.framework.version>
 	</properties>
 	<build>
 		<sourceDirectory>src</sourceDirectory>
 		<resources>
 			<resource>
-	            <directory>src</directory>
-	            <includes>
-	                <include>**/*.xml</include>
-	            </includes>
-	        </resource>
+				<directory>src</directory>
+				<includes>
+					<include>**/*.xml</include>
+				</includes>
+			</resource>
 			<resource>
 				<directory>rsc</directory>
 				<excludes>
@@ -49,6 +50,21 @@
 							<resources>
 								<resource>
 									<directory>rsc</directory>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+					<execution>
+						<id>copy-lib</id>
+						<phase>validate</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${basedir}/target/OpenHospital20/lib</outputDirectory>
+							<resources>
+								<resource>
+									<directory>lib</directory>
 								</resource>
 							</resources>
 						</configuration>
@@ -227,7 +243,7 @@
 		<dependency>
 			<groupId>org.apache.httpcomponents</groupId>
 			<artifactId>httpclient</artifactId>
-			<version>4.5.1</version>
+			<version>4.5.3</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.httpcomponents</groupId>
@@ -265,12 +281,19 @@
 		<dependency>
 			<groupId>com.lowagie</groupId>
 			<artifactId>itext</artifactId>
-			<version>4.2.2</version>
-			<type>pom</type>
+			<version>1.02b</version>
+			<scope>system</scope>
+			<systemPath>${project.basedir}/lib/itext-1.02b.jar</systemPath>
 		</dependency>
 		<dependency>
 			<groupId>jasperreports</groupId>
 			<artifactId>jasperreports</artifactId>
+			<exclusions>
+	          <exclusion>
+	          	<groupId>com.lowagie</groupId>
+				<artifactId>itext</artifactId>
+	          </exclusion>
+	        </exclusions>
 			<version>3.0.0</version>
 		</dependency>
 		<dependency>
@@ -288,11 +311,10 @@
 			<artifactId>joda-time</artifactId>
 			<version>2.2</version>
 		</dependency>
-
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<version>4.1</version>
+			<version>4.12</version>
 		</dependency>
 		<dependency>
 			<groupId>libdbus-java</groupId>
@@ -302,15 +324,15 @@
 			<systemPath>${project.basedir}/lib/libdbus-java-2.4.jar</systemPath>
 		</dependency>
 		<dependency>
-	    	<groupId>org.apache.logging.log4j</groupId>
-		    <artifactId>log4j-api</artifactId>
-		    <version>2.3</version>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-api</artifactId>
+			<version>2.3</version>
 		</dependency>
 		<dependency>
-		    <groupId>org.apache.logging.log4j</groupId>
-		    <artifactId>log4j-core</artifactId>
-	    	<version>2.3</version>
-	    </dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-core</artifactId>
+			<version>2.3</version>
+		</dependency>
 		<dependency>
 			<groupId>mysql</groupId>
 			<artifactId>mysql-connector-java</artifactId>
@@ -345,6 +367,34 @@
 			<systemPath>${project.basedir}/lib/sal_isf.jar</systemPath>
 		</dependency>
 		<dependency>
+			<groupId>jai</groupId>
+			<artifactId>clibwrapper</artifactId>
+			<version>0.1</version>
+			<scope>system</scope>
+			<systemPath>${project.basedir}/lib/dicom/jai/clibwrapper_jiio.jar</systemPath>
+		</dependency>
+		<dependency>
+			<groupId>jai</groupId>
+			<artifactId>jai_core</artifactId>
+			<version>1.1.4</version>
+			<scope>system</scope>
+			<systemPath>${project.basedir}/lib/dicom/jai/jai_core-1.1.4-b03.jar</systemPath>
+		</dependency>
+		<dependency>
+			<groupId>jai</groupId>
+			<artifactId>jai_imageio</artifactId>
+			<version>1.2</version>
+			<scope>system</scope>
+			<systemPath>${project.basedir}/lib/dicom/jai/jai_imageio-1.2-b04.jar</systemPath>
+		</dependency>
+		<dependency>
+			<groupId>jai</groupId>
+			<artifactId>jai_codec</artifactId>
+			<version>1.1.4</version>
+			<scope>system</scope>
+			<systemPath>${project.basedir}/lib/dicom/jai/jai_codec-1.1.4-b03.jar</systemPath>
+		</dependency>
+		<dependency>
 			<groupId>org.dcm4che2</groupId>
 			<artifactId>dcm4che-core</artifactId>
 			<version>2.0.26</version>
@@ -368,8 +418,23 @@
 	  	<dependency>
 	  		<groupId>org.apache.poi</groupId>
 	  		<artifactId>poi</artifactId>
-	  		<version>3.13</version>
+	  		<version>3.7</version>
 	  	</dependency>
+	  	<dependency>
+		    <groupId>org.apache.poi</groupId>
+		    <artifactId>poi-ooxml</artifactId>
+		    <version>3.7</version>
+		</dependency>
+		<dependency>
+		    <groupId>org.apache.poi</groupId>
+		    <artifactId>poi-ooxml-schemas</artifactId>
+		    <version>3.7</version>
+		</dependency>
+		<dependency>
+		    <groupId>org.apache.xmlbeans</groupId>
+		    <artifactId>xmlbeans</artifactId>
+		    <version>2.3.0</version>
+		</dependency>
 	  	<dependency>
 	  		<groupId>org.slf4j</groupId>
 	  		<artifactId>slf4j-api</artifactId>
@@ -385,36 +450,11 @@
 			<artifactId>smack</artifactId>
 			<version>3.2.1</version>
 		</dependency>
-	  	<dependency>
+		<dependency>
 			<groupId>org.igniterealtime.smack</groupId>
 			<artifactId>smackx</artifactId>
 			<version>3.2.1</version>
 		</dependency>
-	  	<dependency>
-	  		<groupId>org.springframework</groupId>
-	  		<artifactId>spring-aop</artifactId>
-	  		<version>4.2.0.RELEASE</version>
-	  	</dependency>
-	  	<dependency>
-	  		<groupId>org.springframework</groupId>
-	  		<artifactId>spring-beans</artifactId>
-	  		<version>4.2.0.RELEASE</version>
-	  	</dependency>
-	  	<dependency>
-	  		<groupId>org.springframework</groupId>
-	  		<artifactId>spring-context</artifactId>
-	  		<version>4.2.0.RELEASE</version>
-	  	</dependency>
-	  	<dependency>
-	  		<groupId>org.springframework</groupId>
-	  		<artifactId>spring-core</artifactId>
-	  		<version>4.2.0.RELEASE</version>
-	  	</dependency>
-	  	<dependency>
-	  		<groupId>org.springframework</groupId>
-	  		<artifactId>spring-expression</artifactId>
-	  		<version>4.2.0.RELEASE</version>
-	  	</dependency>
 	  	<dependency>
 	  		<groupId>antlr</groupId>
 	  		<artifactId>antlr</artifactId>
@@ -433,13 +473,23 @@
 	  	<dependency>
 	  		<groupId>org.hibernate</groupId>
 	  		<artifactId>hibernate-core</artifactId>
-	  		<version>4.1.5.Final</version>
+	  		<version>4.2.13.Final</version>
 	  	</dependency>
 	  	<dependency>
 	  		<groupId>org.hibernate.javax.persistence</groupId>
 	  		<artifactId>hibernate-jpa-2.0-api</artifactId>
 	  		<version>1.0.1.Final</version>
 	  	</dependency>
+	  	<dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate-entitymanager</artifactId>
+			<version>4.2.5.Final</version>
+		</dependency>
+		<dependency>
+		    <groupId>org.hibernate</groupId>
+		    <artifactId>hibernate-c3p0</artifactId>
+		    <version>4.2.13.Final</version>
+		</dependency>
 	  	<dependency>
 	  		<groupId>org.jboss.logging</groupId>
 	  		<artifactId>jboss-logging</artifactId>
@@ -465,5 +515,88 @@
 	  		<artifactId>commons-cli</artifactId>
 	  		<version>1.2</version>
 	  	</dependency>
+	  	<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-orm</artifactId>
+			<version>${spring.framework.version}</version>
+		</dependency>
+	  	<dependency>
+	  		<groupId>org.springframework</groupId>
+	  		<artifactId>spring-aop</artifactId>
+	  		<version>${spring.framework.version}</version>
+	  	</dependency>
+	  	<dependency>
+	  		<groupId>org.springframework</groupId>
+	  		<artifactId>spring-beans</artifactId>
+	  		<version>${spring.framework.version}</version>
+	  	</dependency>
+	  	<dependency>
+	  		<groupId>org.springframework</groupId>
+	  		<artifactId>spring-context</artifactId>
+	  		<version>${spring.framework.version}</version>
+	  	</dependency>
+	  	<dependency>
+	  		<groupId>org.springframework</groupId>
+	  		<artifactId>spring-core</artifactId>
+	  		<version>${spring.framework.version}</version>
+	  	</dependency>
+	  	<dependency>
+	  		<groupId>org.springframework</groupId>
+	  		<artifactId>spring-expression</artifactId>
+	  		<version>${spring.framework.version}</version>
+	  	</dependency>
+    	<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-test</artifactId>
+			<version>${spring.framework.version}</version>
+		</dependency>
+		<dependency>
+ 			<groupId>org.springframework</groupId>
+ 		<artifactId>spring-tx</artifactId>
+ 			<version>${spring.framework.version}</version>
+ 		</dependency>
+    	<dependency>
+		    <groupId>org.springframework.data</groupId>
+		    <artifactId>spring-data-jpa</artifactId>
+		    <version>1.10.11.RELEASE</version>
+		</dependency>
+		<dependency>
+		    <groupId>org.springframework.boot</groupId>
+		    <artifactId>spring-boot-test</artifactId>
+		    <version>1.4.0.RELEASE</version>
+		    <scope>test</scope>
+		</dependency>	
+		<dependency>
+		    <groupId>org.springframework.boot</groupId>
+		    <artifactId>spring-boot-autoconfigure</artifactId>
+		    <version>1.3.0.RELEASE</version>
+		</dependency>	
+		<dependency>
+		    <groupId>org.springframework.boot</groupId>
+		    <artifactId>spring-boot-test-autoconfigure</artifactId>
+		    <version>1.4.0.RELEASE</version>
+		</dependency>
+		<dependency>
+		    <groupId>org.aspectj</groupId>
+		    <artifactId>aspectjweaver</artifactId>
+		    <version>1.8.13</version>
+		</dependency>
+		
+		<dependency>
+		    <groupId>org.springframework.boot</groupId>
+		    <artifactId>spring-boot-starter-test</artifactId>
+		    <version>1.4.0.RELEASE</version>
+		    <scope>test</scope>
+		</dependency>
   </dependencies>
+  <repositories>
+    	<repository>
+        	<id>spring-libs-release</id>
+        	<name>Spring Releases</name>
+        	<url>https://repo.spring.io/libs-release</url>
+        	<snapshots>
+            	<enabled>false</enabled>
+        	</snapshots>
+    	</repository>
+	</repositories>
 </project>

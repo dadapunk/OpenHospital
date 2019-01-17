@@ -1,38 +1,30 @@
 package org.isf.exatype.service;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import org.isf.exatype.model.ExamType;
-import org.isf.utils.db.DbJpaUtil;
+import org.isf.utils.db.TranslateOHException;
 import org.isf.utils.exception.OHException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
+@Transactional(rollbackFor=OHException.class)
+@TranslateOHException
 public class ExamTypeIoOperation {
+
+	@Autowired
+	private ExamTypeIoOperationRepository repository;
 	
 	/**
 	 * Return the list of {@link ExamType}s.
 	 * @return the list of {@link ExamType}s.
 	 * @throws OHException
 	 */
-    @SuppressWarnings("unchecked")
 	public ArrayList<ExamType> getExamType() throws OHException 
 	{
-		DbJpaUtil jpa = new DbJpaUtil(); 
-		ArrayList<ExamType> pexamtype = null;
-				
-		
-		jpa.beginTransaction();
-		
-		String query = "SELECT * FROM EXAMTYPE ORDER BY EXC_DESC";
-		jpa.createQuery(query, ExamType.class, false);
-		List<ExamType> examTypeList = (List<ExamType>)jpa.getList();
-		pexamtype = new ArrayList<ExamType>(examTypeList);			
-		
-		jpa.commitTransaction();
-
-		return pexamtype;
+		return new ArrayList<ExamType>(repository.findAllByOrderByDescriptionAsc()); 	
 	}
 	
 	/**
@@ -44,15 +36,13 @@ public class ExamTypeIoOperation {
 	public boolean updateExamType(
 			ExamType examType) throws OHException 
 	{
-		DbJpaUtil jpa = new DbJpaUtil(); 
 		boolean result = true;
+	
+
+		ExamType savedExamType = repository.save(examType);
+		result = (savedExamType != null);
 		
-		
-		jpa.beginTransaction();	
-		jpa.merge(examType);
-    	jpa.commitTransaction();
-    	
-		return result;	
+		return result;
 	}
 	
 	/**
@@ -64,15 +54,12 @@ public class ExamTypeIoOperation {
 	public boolean newExamType(
 			ExamType examType) throws OHException 
 	{
-		DbJpaUtil jpa = new DbJpaUtil(); 
 		boolean result = true;
+	
 		
+		repository.save(examType);
 		
-		jpa.beginTransaction();	
-		jpa.persist(examType);
-    	jpa.commitTransaction();
-    	
-		return result;	
+		return result;
 	}
 	
 	/**
@@ -84,16 +71,12 @@ public class ExamTypeIoOperation {
 	public boolean deleteExamType(
 			ExamType examType) throws OHException 
 	{
-		DbJpaUtil jpa = new DbJpaUtil(); 
 		boolean result = true;
+	
 		
+		repository.delete(examType);
 		
-		jpa.beginTransaction();	
-		ExamType objToRemove = (ExamType) jpa.find(ExamType.class, examType.getCode());
-		jpa.remove(objToRemove);
-    	jpa.commitTransaction();
-    	
-		return result;	
+		return result;
 	}
 	
 	/**
@@ -106,19 +89,11 @@ public class ExamTypeIoOperation {
 	public boolean isCodePresent(
 			String code) throws OHException
 	{
-		DbJpaUtil jpa = new DbJpaUtil(); 
-		ExamType examType;
-		boolean result = false;
+		boolean result = true;
+	
 		
+		result = repository.exists(code);
 		
-		jpa.beginTransaction();	
-		examType = (ExamType)jpa.find(ExamType.class, code);
-		if (examType != null)
-		{
-			result = true;
-		}
-    	jpa.commitTransaction();
-    	
-		return result;	
+		return result;
 	}
 }
